@@ -8,3 +8,6 @@ esp8266通过mqtt控制舵机开门
 ## requirements
 - ESP8266开发板
 - SG90舵机
+
+## usage
+自行修改代码中的配置，选择任意一个上传到esp8266即可
