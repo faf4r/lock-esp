@@ -49,7 +49,12 @@ void setup() {
 }
 
 void loop() {
-  client.loop();
+  while (!client.loop()) {
+    reconnect_wifi();
+    connect_mqtt();
+    client.subscribe(topic);
+    analogWrite(LED_BUILTIN, led_ON);
+  }
 }
 
 
@@ -102,20 +107,28 @@ void callback(char *topic, uint8_t *payload, unsigned int length) {
     msg += (char)payload[i];
   }
   Serial.printf("receive message from topic %s: %s\n", topic, msg.c_str());
-
-  act_on_msg(msg);
-
   Serial.println("--------------------------");
-  // delay(1000);
-  // analogWrite(LED_BUILTIN, 5);  //这里本只想控制灯但是这个脉宽在舵机控制范围内，所以它被驱动
-  analogWrite(LED_BUILTIN, led_OFF);
+
+  if (act_on_msg(msg)) {
+    // delay(1000);
+    // analogWrite(LED_BUILTIN, 5);  //这里本只想控制灯但是这个脉宽在舵机控制范围内，所以它被驱动
+    analogWrite(LED_BUILTIN, led_OFF);
+  }
+  //Error, need reconnect or reset so keep the LED on
 }
 
-void act_on_msg(String msg) {
+bool act_on_msg(String msg) {
   if (msg.equals("open_door")) {
     servo.write(servo_ON);
+    if (!client.publish("/lock/response", "success")) {
+      servo.write(servo_OFF);
+      delay(200);
+      return false;
+    }
     delay(2000);
   }
+
   servo.write(servo_OFF);
   delay(200);
+  return true;
 }
