@@ -1,10 +1,12 @@
-#include <ESP8266WiFi.h>
+// #include <ESP8266WiFi.h>
+#include <ESP8266WiFiMulti.h>
 #include <Servo.h>
 #include <PubSubClient.h>
 
 //WiFi config
 const char* ssid = "Tenda_D7BEA8";
 const char* pwd = "tt174020";
+ESP8266WiFiMulti WiFiMulti;
 
 //mqtt config
 const char* mqtt_broker = "121.41.80.56";
@@ -39,7 +41,11 @@ void setup() {
   delay(100);
 
   //wifi
-  connect_wifi();
+  WiFiMulti.addAP(ssid, pwd);
+  WiFiMulti.addAP("Hi nova 9z", "12345678");
+  WiFiMulti.addAP("donkeycar", "donkeycar");
+  connect_wifi_multi();
+  // connect_wifi();
 
   //mqtt
   client.setServer(mqtt_broker, mqtt_port);
@@ -49,8 +55,10 @@ void setup() {
 }
 
 void loop() {
+  // Serial.println("loop"); //test if it's blocked: flash frequently
   while (!client.loop()) {
-    reconnect_wifi();
+    // reconnect_wifi();
+    connect_wifi_multi();
     connect_mqtt();
     client.subscribe(topic);
     analogWrite(LED_BUILTIN, led_ON);
@@ -58,6 +66,15 @@ void loop() {
 }
 
 
+void connect_wifi_multi() {
+  analogWrite(LED_BUILTIN, led_ON);
+  Serial.printf("connecting to WiFi......");
+  while (WiFiMulti.run() != WL_CONNECTED) {
+    delay(500);
+  }
+  Serial.printf("connected to %s\n", WiFi.SSID().c_str());
+  analogWrite(LED_BUILTIN, led_OFF);
+}
 
 void connect_wifi() {
   analogWrite(LED_BUILTIN, led_ON);
@@ -86,7 +103,7 @@ void reconnect_wifi() {
 void connect_mqtt() {
   analogWrite(LED_BUILTIN, led_ON);
   while (!client.connected()) {
-    String client_id = "esp8266-client-" + String(WiFi.macAddress());
+    String client_id = "esp8266-client-" + WiFi.hostname(); //or String(WiFi.macAddress());
     Serial.printf("client %s is connecting to broker %s ... ", client_id.c_str(), mqtt_broker);
     if (client.connect(client_id.c_str())) {
       Serial.println("connected");
