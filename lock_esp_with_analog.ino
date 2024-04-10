@@ -18,12 +18,12 @@ PubSubClient client(espclient); //必须传一个client作为参数
 //servo config
 #define servo_pin 2     //GPIO2--D4 //和灯共用一个pin，但是控制舵机的脉宽只有一小部分。
 #define servo_ON 60     //开门的角度
-#define servo_OFF 150   //回位的角度
+#define servo_OFF 155   //回位的角度
 Servo servo;
 
 //LED config
-#define led_OFF 199 //200即占空比100%时不亮，占空比越低越亮
-#define led_ON  100
+#define led_OFF 200 //200即占空比100%时不亮，占空比越低越亮
+#define led_ON  199
 
 void setup() {
   analogWriteFreq(50);
@@ -56,18 +56,18 @@ void setup() {
 
 void loop() {
   // Serial.println("loop"); //test if it's blocked: flash frequently
-  while (!client.loop()) {
-    // reconnect_wifi();
+  if (!client.loop()) {
+    analogWrite(LED_BUILTIN, led_ON);
     connect_wifi_multi();
     connect_mqtt();
     client.subscribe(topic);
-    analogWrite(LED_BUILTIN, led_ON);
   }
 }
 
 
 void connect_wifi_multi() {
   analogWrite(LED_BUILTIN, led_ON);
+  WiFi.disconnect(); // 清楚连接信息，防止路由器重启后信道变化
   Serial.printf("connecting to WiFi......");
   while (WiFiMulti.run() != WL_CONNECTED) {
     delay(500);
@@ -78,6 +78,7 @@ void connect_wifi_multi() {
 
 void connect_wifi() {
   analogWrite(LED_BUILTIN, led_ON);
+  WiFi.disconnect(); // 清楚连接信息，防止路由器重启后信道变化
   Serial.printf("connecting to %s......", ssid);
   WiFi.begin(ssid, pwd);
   while (!WiFi.isConnected()) {
@@ -85,19 +86,6 @@ void connect_wifi() {
   }
   Serial.println("connected");
   analogWrite(LED_BUILTIN, led_OFF);
-}
-
-void reconnect_wifi() {
-  Serial.printf("reconnecting to %s......", ssid);
-  analogWrite(LED_BUILTIN, led_ON);
-  WiFi.disconnect();  //清楚连接信息，防止路由器重启后信道变化
-  WiFi.begin(ssid, pwd);
-  while (!WiFi.isConnected()) {
-    delay(500);
-  }
-  Serial.println("connected");
-  analogWrite(LED_BUILTIN, led_OFF);
-  delay(20);
 }
 
 void connect_mqtt() {

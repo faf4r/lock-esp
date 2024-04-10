@@ -53,7 +53,6 @@ void loop()
 {
     // Serial.println("loop"); //test if it's blocked: flash frequently
     while (!client.loop()) {
-        // reconnect_wifi();
         connect_wifi_multi();
         connect_mqtt();
         client.subscribe(topic);
@@ -63,6 +62,7 @@ void loop()
 
 void connect_wifi_multi()
 {
+    WiFi.disconnect(); // 清除连接信息，防止路由器重启后信道变化
     digitalWrite(LED_BUILTIN, LOW);
     Serial.printf("connecting to WiFi......");
     while (WiFiMulti.run() != WL_CONNECTED) {
@@ -74,6 +74,7 @@ void connect_wifi_multi()
 
 void connect_wifi()
 {
+    WiFi.disconnect(); // 清除连接信息，防止路由器重启后信道变化
     Serial.printf("connecting to %s......", ssid);
     WiFi.begin(ssid, pwd);
     int led_state = HIGH;
@@ -84,22 +85,6 @@ void connect_wifi()
     }
     Serial.println("connected");
     digitalWrite(LED_BUILTIN, HIGH);
-}
-
-void reconnect_wifi()
-{
-    Serial.printf("reconnecting to %s......", ssid);
-    WiFi.disconnect(); // 清楚连接信息，防止路由器重启后信道变化
-    WiFi.begin(ssid, pwd);
-    int led_state = HIGH;
-    while (!WiFi.isConnected()) {
-        digitalWrite(LED_BUILTIN, !led_state);
-        led_state = !led_state;
-        delay(500);
-    }
-    Serial.println("connected");
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(20);
 }
 
 void connect_mqtt()
